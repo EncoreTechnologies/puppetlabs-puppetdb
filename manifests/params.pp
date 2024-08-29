@@ -1,6 +1,6 @@
-# PRIVATE CLASS - do not use directly
+# @summary default configuration settings
 #
-# The puppetdb default configuration settings.
+# @api private
 class puppetdb::params inherits puppetdb::globals {
   $listen_address            = 'localhost'
   $listen_port               = '8080'
@@ -15,7 +15,6 @@ class puppetdb::params inherits puppetdb::globals {
   $postgres_listen_addresses = 'localhost'
 
   $puppetdb_version          = $puppetdb::globals::version
-  $database                  = $puppetdb::globals::database
   $manage_dbserver           = true
   $manage_database           = true
   $manage_dnf_module         = false
@@ -26,13 +25,14 @@ class puppetdb::params inherits puppetdb::globals {
     $manage_pg_repo            = false
   }
 
-  if $puppetdb_version in ['latest','present'] or versioncmp($puppetdb_version, '7.0.0') >= 0 {
-    $postgres_version          = '11'
-  } else {
-    $postgres_version          = '9.6'
+  $postgres_version          = '14'
+
+  $puppetdb_major_version = $puppetdb_version ? {
+    'latest'  => '8',
+    'present' => '8',
+    default   => $puppetdb_version.split('.')[0],
   }
 
-  # The remaining database settings are not used for an embedded database
   $database_host          = 'localhost'
   $database_port          = '5432'
   $database_name          = 'puppetdb'
@@ -43,6 +43,7 @@ class puppetdb::params inherits puppetdb::globals {
   $database_validate      = true
   $database_max_pool_size = undef
   $puppetdb_server        = fact('networking.fqdn')
+  $password_encryption    = 'scram-sha-256'
 
   # These settings manage the various auto-deactivation and auto-purge settings
   $node_ttl               = '7d'
@@ -54,16 +55,13 @@ class puppetdb::params inherits puppetdb::globals {
   $gc_interval               = '60'
   $node_purge_gc_batch_limit = '25'
 
-  $log_slow_statements    = '10'
   $conn_max_age           = '60'
-  $conn_keep_alive        = '45'
   $conn_lifetime          = '0'
 
   $max_threads            = undef
   $migrate                = true
 
   # These settings are for the read database
-  $read_database                     = 'postgres'
   $read_database_host                = undef
   $read_database_port                = '5432'
   $read_database_name                = 'puppetdb'
@@ -72,9 +70,7 @@ class puppetdb::params inherits puppetdb::globals {
   $manage_read_db_password           = true
   $read_database_jdbc_ssl_properties = ''
   $read_database_validate            = true
-  $read_log_slow_statements          = '10'
   $read_conn_max_age                 = '60'
-  $read_conn_keep_alive              = '45'
   $read_conn_lifetime                = '0'
   $read_database_max_pool_size       = undef
 
@@ -82,64 +78,71 @@ class puppetdb::params inherits puppetdb::globals {
   $java_args               = {}
   $merge_default_java_args = true
 
-  $puppetdb_package     = 'puppetdb'
   $puppetdb_service     = 'puppetdb'
   $masterless           = false
 
   if !($puppetdb_version in ['latest','present','absent']) and versioncmp($puppetdb_version, '3.0.0') < 0 {
     case fact('os.family') {
       'RedHat', 'Suse', 'Archlinux','Debian': {
+        $puppetdb_package       = 'puppetdb'
+        $terminus_package       = 'puppetdb-terminus'
         $etcdir                 = '/etc/puppetdb'
         $vardir                 = '/var/lib/puppetdb'
-        $database_embedded_path = "${vardir}/db/db"
-        $puppet_confdir         = pick($settings::confdir,'/etc/puppet')
+        $puppet_confdir         = pick($puppetdb::globals::puppet_confdir,'/etc/puppet')
         $puppet_service_name    = 'puppetmaster'
       }
       'OpenBSD': {
+        $puppetdb_package       = 'puppetdb'
+        $terminus_package       = 'puppetdb-terminus'
         $etcdir                 = '/etc/puppetdb'
         $vardir                 = '/var/db/puppetdb'
-        $database_embedded_path = "${vardir}/db/db"
-        $puppet_confdir         = pick($settings::confdir,'/etc/puppet')
+        $puppet_confdir         = pick($puppetdb::globals::puppet_confdir,'/etc/puppet')
         $puppet_service_name    = 'puppetmasterd'
       }
       'FreeBSD': {
+        $puppetdb_package       = inline_epp('puppetdb<%= $puppetdb::params::puppetdb_major_version %>')
+        $terminus_package       = inline_epp('puppetdb-terminus<%= $puppetdb::params::puppetdb_major_version %>')
         $etcdir                 = '/usr/local/etc/puppetdb'
         $vardir                 = '/var/db/puppetdb'
-        $database_embedded_path = "${vardir}/db/db"
-        $puppet_confdir         = pick($settings::confdir,'/usr/local/etc/puppet')
+        $puppet_confdir         = pick($puppetdb::globals::puppet_confdir,'/usr/local/etc/puppet')
         $puppet_service_name    = 'puppetmaster'
       }
       default: {
         fail("The fact 'os.family' is set to ${fact('os.family')} which is not supported by the puppetdb module.")
       }
     }
-    $terminus_package = 'puppetdb-terminus'
     $test_url         = '/v3/version'
   } else {
     case fact('os.family') {
       'RedHat', 'Suse', 'Archlinux','Debian': {
+        $puppetdb_package    = 'puppetdb'
+        $terminus_package    = 'puppetdb-termini'
         $etcdir              = '/etc/puppetlabs/puppetdb'
-        $puppet_confdir      = pick($settings::confdir,'/etc/puppetlabs/puppet')
+        $puppet_confdir      = pick($puppetdb::globals::puppet_confdir,'/etc/puppetlabs/puppet')
         $puppet_service_name = 'puppetserver'
+        $vardir              = '/opt/puppetlabs/server/data/puppetdb'
       }
       'OpenBSD': {
+        $puppetdb_package    = 'puppetdb'
+        $terminus_package    = 'puppetdb-termini'
         $etcdir              = '/etc/puppetlabs/puppetdb'
-        $puppet_confdir      = pick($settings::confdir,'/etc/puppetlabs/puppet')
+        $puppet_confdir      = pick($puppetdb::globals::puppet_confdir,'/etc/puppetlabs/puppet')
         $puppet_service_name = undef
+        $vardir              = '/opt/puppetlabs/server/data/puppetdb'
       }
       'FreeBSD': {
-        $etcdir              = '/usr/local/etc/puppetlabs/puppetdb'
-        $puppet_confdir      = pick($settings::confdir,'/usr/local/etc/puppetlabs/puppet')
-        $puppet_service_name = undef
+        $puppetdb_package    = inline_epp('puppetdb<%= $puppetdb::params::puppetdb_major_version %>')
+        $terminus_package    = inline_epp('puppetdb-terminus<%= $puppetdb::params::puppetdb_major_version %>')
+        $etcdir              = '/usr/local/etc/puppetdb'
+        $puppet_confdir      = pick($puppetdb::globals::puppet_confdir,'/usr/local/etc/puppet')
+        $puppet_service_name = 'puppetserver'
+        $vardir              = '/var/db/puppetdb'
       }
       default: {
         fail("The fact 'os.family' is set to ${fact('os.family')} which is not supported by the puppetdb module.")
       }
     }
-    $terminus_package       = 'puppetdb-termini'
     $test_url               = '/pdb/meta/v1/version'
-    $vardir                 = '/opt/puppetlabs/server/data/puppetdb'
-    $database_embedded_path = "${vardir}/db/db"
   }
 
   $confdir = "${etcdir}/conf.d"
@@ -187,14 +190,14 @@ class puppetdb::params inherits puppetdb::globals {
   $cleanup_timer_interval   = "*-*-* ${fqdn_rand(24)}:${fqdn_rand(60)}:00"
   $dlo_max_age              = 90
 
-  # certificats used for PostgreSQL SSL configuration. Puppet certificates are used
+  # certificates used for PostgreSQL SSL configuration. Puppet certificates are used
   $postgresql_ssl_on            = false
   $postgresql_ssl_folder        = "${puppet_confdir}/ssl"
   $postgresql_ssl_cert_path     = "${postgresql_ssl_folder}/certs/${trusted['certname']}.pem"
   $postgresql_ssl_key_path      = "${postgresql_ssl_folder}/private_keys/${trusted['certname']}.pem"
   $postgresql_ssl_ca_cert_path  = "${postgresql_ssl_folder}/certs/ca.pem"
 
-  # certificats used for Jetty configuration
+  # certificates used for Jetty configuration
   $ssl_set_cert_paths       = false
   $ssl_cert_path            = "${ssl_dir}/public.pem"
   $ssl_key_path             = "${ssl_dir}/private.pem"
@@ -209,7 +212,7 @@ class puppetdb::params inherits puppetdb::globals {
 
   $certificate_whitelist_file = "${etcdir}/certificate-whitelist"
   # the default is free access for now
-  $certificate_whitelist      = [ ]
+  $certificate_whitelist      = []
   # change to this to only allow access by the puppet master by default:
   #$certificate_whitelist      = [ $::servername ]
 

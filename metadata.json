@@ -1,6 +1,6 @@
 {
   "name": "puppetlabs-puppetdb",
-  "version": "7.12.1",
+  "version": "8.1.0",
   "author": "puppetlabs",
   "summary": "Installs PostgreSQL and PuppetDB, sets up the connection to Puppet master.",
   "license": "Apache-2.0",
@@ -14,11 +14,15 @@
     },
     {
       "name": "puppetlabs/postgresql",
-      "version_requirement": ">= 6.5.0 < 10.0.0"
+      "version_requirement": ">= 10.0.0 < 11.0.0"
+    },
+    {
+      "name": "puppetlabs/firewall",
+      "version_requirement": ">= 7.0.0 < 9.0.0"
     },
     {
       "name": "puppetlabs/stdlib",
-      "version_requirement": ">= 4.13.1 < 9.0.0"
+      "version_requirement": ">= 4.13.1 < 10.0.0"
     }
   ],
   "operatingsystem_support": [
@@ -44,12 +48,6 @@
       ]
     },
     {
-      "operatingsystem": "Scientific",
-      "operatingsystemrelease": [
-        "7"
-      ]
-    },
-    {
       "operatingsystem": "SLES",
       "operatingsystemrelease": [
         "12 SP3"
@@ -58,7 +56,6 @@
     {
       "operatingsystem": "Debian",
       "operatingsystemrelease": [
-        "9",
         "10",
         "11"
       ]
@@ -66,7 +63,6 @@
     {
       "operatingsystem": "Ubuntu",
       "operatingsystemrelease": [
-        "16.04",
         "18.04",
         "20.04"
       ]
@@ -75,11 +71,11 @@
   "requirements": [
     {
       "name": "puppet",
-      "version_requirement": ">= 4.10.0 < 8.0.0"
+      "version_requirement": ">= 7.0.0 < 9.0.0"
     }
   ],
   "description": "Module for installing/configuring PuppetDB",
-  "pdk-version": "1.18.0",
-  "template-url": "https://github.com/puppetlabs/pdk-templates#1.18.0",
-  "template-ref": "tags/1.18.0-0-g095317c"
+  "pdk-version": "3.0.1",
+  "template-url": "https://github.com/puppetlabs/pdk-templates#3.0.1",
+  "template-ref": "tags/3.0.1-0-gd13288a"
 }
