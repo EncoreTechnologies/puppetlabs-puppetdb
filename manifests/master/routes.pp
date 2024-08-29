@@ -1,11 +1,11 @@
-# Manages the routes configuration file on the master. See README.md for more
-# details.
+# @summary manages the routes configuration file on the master
+#
+# @api private
 class puppetdb::master::routes (
   $puppet_confdir = $puppetdb::params::puppet_confdir,
   $masterless     = $puppetdb::params::masterless,
   $routes         = undef,
 ) inherits puppetdb::params {
-
   if $masterless {
     $routes_real = {
       'apply' => {
@@ -16,8 +16,8 @@ class puppetdb::master::routes (
         'facts'   => {
           'terminus' => 'facter',
           'cache'    => 'puppetdb_apply',
-        }
-      }
+        },
+      },
     }
   } elsif $routes {
     $routes_real = $routes
@@ -32,8 +32,8 @@ class puppetdb::master::routes (
         'facts' => {
           'terminus' => 'puppetdb',
           'cache'    => $default_fact_cache,
-        }
-      }
+        },
+      },
     }
   }
 
