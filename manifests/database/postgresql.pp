@@ -24,6 +24,10 @@
 # @param manage_database
 #   If true, the PostgreSQL database will be managed by this module. Defaults to `true`.
 #
+# @param manage_dnf_module
+#   If true, the PostgreSQL module will manage the PostgreSQL DNF module. Defaults to `true`
+#   for RedHat releasever >= '8', otherwise is set to 'false'.
+#
 # @param manage_server
 #   Conditionally manages the PostgreSQL server via `postgresql::server`. Defaults
 #   to `true`. If set to `false`, this class will create the database and user via
@@ -79,6 +83,7 @@ class puppetdb::database::postgresql (
   $database_port               = $puppetdb::params::database_port,
   $manage_database             = $puppetdb::params::manage_database,
   $manage_server               = $puppetdb::params::manage_dbserver,
+  $manage_dnf_module           = $puppetdb::params::manage_dnf_module,
   $manage_package_repo         = $puppetdb::params::manage_pg_repo,
   $postgres_version            = $puppetdb::params::postgres_version,
   $postgresql_ssl_on           = $puppetdb::params::postgresql_ssl_on,
@@ -95,6 +100,7 @@ class puppetdb::database::postgresql (
 
   if $manage_server {
     class { 'postgresql::globals':
+      manage_dnf_module   => $manage_dnf_module,
       manage_package_repo => $manage_package_repo,
       version             => $postgres_version,
     }

@@ -20,12 +20,42 @@ class puppetdb::params inherits puppetdb::globals {
   $manage_dnf_module         = false
 
   if fact('os.family') =~ /RedHat|Debian/ {
-    $manage_pg_repo            = true
+    $manage_pg_repo          = true
   } else {
-    $manage_pg_repo            = false
+    $manage_pg_repo          = false
   }
 
-  $postgres_version          = '14'
+  # Configure the DNF module for PostgreSQL on RHEL 8 and later
+  if fact('os.family') == 'RedHat' and versioncmp(fact('os.release.major'), '8') >= 0 {
+    $manage_dnf_module       = true
+  } else {
+    $manage_dnf_module       = false
+  }
+
+  # Set the default PostgreSQL version based on the OS family and version
+  $postgres_version = fact('os.family') ? {
+    'RedHat' => fact('os.release.major') ? {
+      '9' => '15',
+      '8' => '12',
+      default => '9.6',
+    },
+    'Debian' => fact('os.name') ? {
+      'Debian' => fact('os.release.major') ? {
+        '12' => '15',
+        '11' => '13',
+        '10' => '11',
+        default => '9.6',
+      },
+      'Ubuntu' => fact('os.release.major') ? {
+        /^22.04$/ => '14',
+        /^20.04$/ => '12',
+        /^18.04$/ => '10',
+        default => '9.6',
+      },
+      default => '9.6',
+    },
+    default  => '14',
+  }
 
   $puppetdb_major_version = $puppetdb_version ? {
     'latest'  => '8',
