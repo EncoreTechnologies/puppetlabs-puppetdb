@@ -416,7 +416,7 @@ class puppetdb::server (
   }
 
   # Validate report_ttl
-  $repor_ttl_real = assert_type(Puppetdb::Ttl, $_report_ttl_real)
+  $report_ttl_real = assert_type(Puppetdb::Ttl, $_report_ttl_real)
 
   # Validate puppetdb_service_status
   $service_enabled = $puppetdb_service_status ? {
@@ -471,7 +471,7 @@ class puppetdb::server (
     database_validate         => $database_validate,
     node_ttl                  => $node_ttl,
     node_purge_ttl            => $node_purge_ttl,
-    report_ttl                => $report_ttl,
+    report_ttl                => $report_ttl_real,
     facts_blacklist           => $facts_blacklist,
     gc_interval               => $gc_interval,
     node_purge_gc_batch_limit => $node_purge_gc_batch_limit,
